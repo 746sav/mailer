@@ -28,7 +28,7 @@
     $body = str_replace('%phone%', $phone, $body); // строку %phone% на телефон
     $body = str_replace('%message%', $message, $body); // строку %message% на сообщение
 
-    $mail->addAddress("cresexe@mail.ru"); /* Здесь введите Email, куда отправлять */
+    $mail->addAddress("smokotinaAV@yandex.ru"); /* Здесь введите Email, куда отправлять */
     $mail->setFrom($email);
     $mail->Subject = "[Заявка с формы]"; /* Тема письма */
     $mail->MsgHTML($body);
