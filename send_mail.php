@@ -2,13 +2,15 @@
 
     use PHPMailer\PHPMailer\PHPMailer;
     use PHPMailer\PHPMailer\Exception;
+    use PHPMailer\PHPMailer\SMTP;
 
     require "PHPMailer/src/Exception.php";
     require "PHPMailer/src/PHPMailer.php";
+    require 'phpmailer/SMTP.php';
 
     $mail = new PHPMailer(true); /* Создаем объект MAIL */
     $mail->CharSet = "UTF-8"; /* Задаем кодировку UTF-8 */
-    $mail->IsHTML(true); /* Разрешаем работу с HTML */
+    //$mail->IsHTML(true); /* Разрешаем работу с HTML */
 
     // $name = $_POST["name"]; /* Принимаем имя пользователя с формы .. */
     // $email = $_POST["email"]; /* Почту */
@@ -41,39 +43,76 @@
     // header('Content-type: application/json');
     // echo json_encode($response);
 
-    $yourEmail = 'smokotinaAV@yandex.ru'; // ваш email на яндексе
-    $password = 'Cresexe030*'; // ваш пароль к яндексу или пароль приложения
+        # проверка, что ошибки нет
+if (!error_get_last()) {
 
-    // настройки SMTP
-    $mail->Mailer = 'smtp';
-    $mail->Host = 'ssl://smtp.yandex.ru';
-    $mail->Port = 465;
-    $mail->SMTPAuth = true;
-    $mail->Username = $yourEmail; // ваш email - тот же что и в поле From:
-    $mail->Password = $password; // ваш пароль;
-
-
-    // формируем письмо
-
-    // от кого: это поле должно быть равно вашему email иначе будет ошибка
-    $mail->setFrom($yourEmail, 'Ваше Имя');
-
-    // кому - получатель письма
-    $mail->addAddress('smokotinaAV@yandex.ru', 'Алена');  // кому
-
-    $mail->Subject = 'Проверка';  // тема письма
-
-    $mail->msgHTML("<html><body>
-				<h1>Проверка связи!</h1>
-				<p>Это тестовое письмо.</p>
-				</html></body>");
-
-
-    if ($mail->send()) { // отправляем письмо
-    echo 'Письмо отправлено!';
-    }    else {
-    echo 'Ошибка: ' . $mail->ErrorInfo;
+    // Переменные, которые отправляет пользователь
+    $name = $_POST['name'] ;
+    $email = $_POST['email'];
+    $text = $_POST['text'];
+    $file = $_FILES['myfile'];
+    
+    
+    // Формирование самого письма
+    $title = "Заголовок письма";
+    $body = "
+    <h2>Новое письмо</h2>
+    <b>Имя:</b> $name<br>
+    <b>Почта:</b> $email<br><br>
+    <b>Сообщение:</b><br>$text
+    ";
+    
+    // Настройки PHPMailer
+    $mail = new PHPMailer\PHPMailer\PHPMailer();
+    
+    $mail->isSMTP();   
+    $mail->CharSet = "UTF-8";
+    $mail->SMTPAuth   = true;
+    //$mail->SMTPDebug = 2;
+    $mail->Debugoutput = function($str, $level) {$GLOBALS['data']['debug'][] = $str;};
+    
+    // Настройки вашей почты
+    $mail->Host       = 'smtp.yandex.ru'; // SMTP сервера вашей почты
+    $mail->Username   = 'smokotinaAV'; // Логин на почте
+    $mail->Password   = 'Cresexe030*'; // Пароль на почте
+    $mail->SMTPSecure = 'ssl';
+    $mail->Port       = 465;
+    $mail->setFrom('smokotinaAV@yandex.ru', 'Helen'); // Адрес самой почты и имя отправителя
+    
+    // Получатель письма
+    $mail->addAddress('smokotinaAV@yandex.ru');  
+    $mail->addAddress('smokotinaalena5@gmail.com'); // Ещё один, если нужен
+    
+    // Прикрипление файлов к письму
+    if (!empty($file['name'][0])) {
+        for ($i = 0; $i < count($file['tmp_name']); $i++) {
+            if ($file['error'][$i] === 0) 
+                $mail->addAttachment($file['tmp_name'][$i], $file['name'][$i]);
+        }
     }
-    $mail->SMTPDebug = 2;
+    // Отправка сообщения
+    $mail->isHTML(true);
+    $mail->Subject = $title;
+    $mail->Body = $body;    
+    
+    // Проверяем отправленность сообщения
+    if ($mail->send()) {
+        $data['result'] = "success";
+        $data['info'] = "Сообщение успешно отправлено!";
+    } else {
+        $data['result'] = "error";
+        $data['info'] = "Сообщение не было отправлено. Ошибка при отправке письма";
+        $data['desc'] = "Причина ошибки: {$mail->ErrorInfo}";
+    }
+    
+} else {
+    $data['result'] = "error";
+    $data['info'] = "В коде присутствует ошибка";
+    $data['desc'] = error_get_last();
+}
+
+// Отправка результата
+header('Content-Type: application/json');
+echo json_encode($data);
 
 ?>
